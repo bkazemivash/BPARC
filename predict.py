@@ -8,7 +8,7 @@ of all subjects.
 
 Example:
     You can easily use this module by calling :
-        $ python -W ignore  predict.py -d AU -i specific_directory/img1.nii 
+        $ python -W ignore  predict.py  -d AU -i specific_directory/img1.nii 
 
 This source code is licensed under the instructions found in the LICENSE file in the root directory of this source tree.
 """
