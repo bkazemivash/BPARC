@@ -1,16 +1,16 @@
 """Module for predicting brain maps
 
 This module contains an implementation for model prediction function to generate brain maps using pretrained
-models. You can save mandatory information in .json file before using this module likepath to a .pkl file 
-including all models' information, mask file, and storage directory. There are 2 command line arguments defining 
-brain network domain ('ALL', 'SC', 'AU', 'SM', 'VI', 'CC', 'DM', 'CB') and path to Nifti image or a DataFrame table
+models. You can save mandatory information in .json file before using this module like a path to the .pkl file 
+including all models' information, a path to a mask file, and also storage directory. There are 2 command line arguments which define 
+brain network domain ('ALL', 'SC', 'AU', 'SM', 'VI', 'CC', 'DM', 'CB') and a path to Nifti image or a DataFrame table
 of all subjects.
 
 Example:
     You can easily use this module by calling :
         $ python -W ignore  predict.py -d AU -i specific_directory/img1.nii 
 
-This source code is licensed under the license found in the LICENSE file in the root directory of this source tree.
+This source code is licensed under the instructions found in the LICENSE file in the root directory of this source tree.
 """
 
 
