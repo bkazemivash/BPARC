@@ -8,6 +8,29 @@ from nilearn.masking import unmask, apply_mask
 from nilearn import image
 from scipy import ndimage, stats
 
+def image_masking(inp_img: object, mask_img: object) -> object:
+    """Function to create a masked Nifti image
+
+    Args:
+        inp_img (object): a 3D/4D Niimg-like object
+        mask_img (object): a 3D Niimg-like object
+
+    Raises:
+        TypeError: If 'inp_img' is not a Niimg-like object
+        ValueError: If 'inp_img' is not a 4D object
+
+    Returns:
+        object: a 3D/4D Niimg-like masked object
+    """
+    if not hasattr(inp_img, 'get_fdata'):
+        raise TypeError("Input image is not a Nifti file, please check your input!")
+    if not (inp_img.ndim in [3, 4]):
+        raise ValueError("Shape of input image is not 3D/4D!")
+    return unmask(apply_mask(inp_img, mask_img), mask_img)
+    
+
+
+
 def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
     """Function to scale input array in range of [lb, ub]
 
@@ -52,9 +75,9 @@ def apply_norm_scale_fMRI(inp_img: object, mask_img: object, ax = 1, sc = False)
     Returns:
         object: a 4D Niimg-like object
     """
-    if not hasattr(inp_img, 'get_data'):
+    if not hasattr(inp_img, 'get_fdata'):
         raise TypeError("Input image is not a Nifti file, please check your input!")
-    if not (inp_img.ndim == 4):
+    if inp_img.ndim != 4:
         raise ValueError("Shape of input fMRI image is not 4D!")
     data = apply_mask(inp_img, mask_img)
     data = normalize_array(data, ax=ax)
@@ -76,9 +99,9 @@ def get_coordinates(inp_img: object, state=False) -> tuple:
     Returns:
         tuple: A tuple including real and transformed coordinates of amplitude
     """
-    if not hasattr(inp_img, 'get_data'):
+    if not hasattr(inp_img, 'get_fdata'):
         raise TypeError("Input image is not a Nifti file, please check your input!")
-    data = inp_img.get_data()
+    data = inp_img.get_fdata()
     assert data.ndim == 3, 'Input image must be a 3D tensor (x, y, z)'
     if state:
         data = np.abs(data)
