@@ -1,6 +1,6 @@
 """Tools for processing and visualozing 3D/4D Niimg-like object.
 
-This module contains functions to run different preprocessing / postprocessing steps on input fMRI 
+This module contains mandatory functions to run different preprocessing / postprocessing steps on input fMRI 
 images to feed them to the model or do some statistical analysis."""
 
 import numpy as np
