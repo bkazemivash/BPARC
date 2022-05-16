@@ -8,6 +8,7 @@ from nilearn.masking import unmask, apply_mask
 from nilearn import image
 from scipy import ndimage, stats
 
+
 def image_masking(inp_img: object, mask_img: object) -> object:
     """Function to create a masked Nifti image
 
@@ -29,15 +30,13 @@ def image_masking(inp_img: object, mask_img: object) -> object:
     return unmask(apply_mask(inp_img, mask_img), mask_img)
     
 
-
-
 def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
     """Function to scale input array in range of [lb, ub]
 
     Args:
         ar (np.ndarray): input array to be scaled
         lb (int, optional): lower bound of scaling function. Defaults to 0.
-        ub (int, optional): upper bound of scaling function. Defaults to 1.
+        ub (int, optional): upper bound of scaling function. Defaults to 1.        
         ax (obj:int, optional): axis to apply scaling function. Defaults to None.
 
     Returns:
@@ -50,7 +49,7 @@ def normalize_array(ar: np.ndarray, ax = None) -> np.ndarray:
     """Function to z-score input array
 
     Args:
-        ar (np.ndarray): input array to be normalized
+        ar (np.ndarray): input array to be normalized.         
         ax (obj:int, optional): axis to apply scaling function. Defaults to None.
 
     Returns:
@@ -65,7 +64,7 @@ def apply_norm_scale_fMRI(inp_img: object, mask_img: object, ax = 1, sc = False)
     Args:
         inp_img (object): a 4D Niimg-like object
         mask_img (object): a 3D Niimg-like object
-        ax (int, optional): Z-score by a specific axis, {0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI)}. Defaults to -1.
+        ax (int, optional): Z-score by a specific axis; 0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI). Defaults to -1.
         sc (bool, optional): If scaling is needed. Defaults to False.
 
     Raises:
