@@ -32,8 +32,7 @@ def load_model(model_path: str) -> BrainSeg:
     """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     checkpoint = torch.load(os.path.abspath(model_path), map_location=device)
-    model = BrainSeg(in_channels=1, out_channels=[64, 32, 16, 8, 16, 32, 64], kernel_size=3)
-    model = model.to(device)
+    model = BrainSeg(i_channel=1, h_channel=[64, 32, 16, 8]).to(device)
     model.load_state_dict(checkpoint['state_dict'])
     model.eval() 
     return model
