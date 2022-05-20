@@ -41,7 +41,7 @@ class ResEncBlocks(nn.Module):
     def forward(self, x):
         residual = self.block1(x)
         out = self.block2(residual)
-        out += residual
+        out = residual + out.clone()
         return self.block3(out)
 
 

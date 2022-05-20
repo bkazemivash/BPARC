@@ -39,11 +39,11 @@ class BrainSeg(nn.Module):
         out = self.layer4(residual3)
         out = self.layer5(out)
         out = self.layer6(out)
-        out += residual3
+        out = residual3 + out.clone()
         out = self.layer7(out)
         out = self.layer8(out)
-        out += residual2
+        out = residual2 + out.clone()
         out = self.layer9(out)
-        out += residual1
+        out = residual1 + out.clone()
         return self.layer10(out)
 
