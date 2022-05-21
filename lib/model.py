@@ -4,7 +4,7 @@ BrainSeg class includes stack of encoding and decoding blocks, structured and ut
 to predict brain networks in different domains."""
 
 from torch import nn 
-from blocks import ResEncBlocks, ResDecBlocks 
+from blocks import ResEncBlocks, ResDecBlocks
 
 class BrainSeg(nn.Module):
     """Class for implementing brain segmentation model by assembling encoding/decoding blocks.
