@@ -58,12 +58,12 @@ def main():
                 else:
                     segmentation_model.eval() 
                 running_loss = 0.0
-                logging.info("Start data loader")
                 for inp, label in dataloaders[phase]:
                     inp = inp.to(dev, non_blocking=True)
                     label = label.to(dev, non_blocking=True)
                     optimizer.zero_grad()
-                    for j in range(inp.shape[-1]):
+                    shuffled_index = torch.randint(inp.shape[-1], (inp.shape[-1],))
+                    for j in shuffled_index:
                         with torch.set_grad_enabled(phase == 'train'):
                             preds = segmentation_model(inp[...,j])
                             loss = criterion(preds, label[...,j])
