@@ -58,12 +58,9 @@ def main():
             else:
                 segmentation_model.eval() 
             running_loss = 0.0
-            subject_count = 0
             for inp, label in dataloaders[phase]:
                 inp = inp.to(dev, non_blocking=True)
                 label = label.to(dev, non_blocking=True)
-                subject_count +=1
-                logging.debug("number of loaded fMRI files : {}".format(subject_count))
                 optimizer.zero_grad()
                 shuffled_index = torch.randint(inp.shape[-1], (inp.shape[-1],))
                 for j in shuffled_index:
