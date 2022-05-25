@@ -73,7 +73,7 @@ def main():
                     running_loss += loss.item()                     
             if phase == 'train':
                 scheduler.step()
-            epoch_loss = running_loss / len(data_pack[phase]) * inp.shape[-1]
+            epoch_loss = running_loss / (len(data_pack[phase]) * inp.shape[-1])
             phase_error[phase] = epoch_loss
         logging.info("Epoch {}/{} - Train Loss: {:.10f} and Validation Loss: {:.10f}".format(epoch+1, num_epochs, phase_error['train'], phase_error['val']))
         if phase == 'val' and epoch_loss < best_loss:
