@@ -9,6 +9,7 @@ def main():
     parser.add_argument('-n', '--network', required=True, help='Network ID') 
     parser.add_argument('-b', '--batchs', required=True, help='Batch size')  
     parser.add_argument('-w', '--workers', required=True, help='Number of workers for data loader')    
+    parser.add_argument('-e', '--epochs', required=True, help='Number of epochs for training phase')    
     args = parser.parse_args()
     logging.root.setLevel(logging.NOTSET)
     logging.basicConfig(level=logging.NOTSET, format="[ %(asctime)s ]  %(levelname)s : %(message)s", datefmt="%d-%b-%y %H:%M:%S")
@@ -18,7 +19,6 @@ def main():
     dev = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
                       68,33,43,70,61,55,63,79,84,96,88,48,81,37,67,38,83,32,40,23,71,17,51,94,13,18,4,7]
-
     setting_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)) , "setting.json")
     if not (os.path.exists(setting_file_path)):
         raise FileNotFoundError("Setting file not found")   
@@ -48,7 +48,7 @@ def main():
     scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=1)
     criterion = torch.nn.MSELoss(reduction='sum')
     best_loss = float("Inf")
-    num_epochs = 200
+    num_epochs = int(args.epochs)
     phase_error = {}
     logging.info("Start training procedure, model is running on GPU : {}".format(next(segmentation_model.parameters()).is_cuda))
     for epoch in range(num_epochs):
@@ -73,7 +73,7 @@ def main():
                     running_loss += loss.item()                     
             if phase == 'train':
                 scheduler.step()
-            epoch_loss = running_loss / len(data_pack[phase])
+            epoch_loss = running_loss / len(data_pack[phase]) * inp.shape[-1]
             phase_error[phase] = epoch_loss
         logging.info("Epoch {}/{} - Train Loss: {:.10f} and Validation Loss: {:.10f}".format(epoch+1, num_epochs, phase_error['train'], phase_error['val']))
         if phase == 'val' and epoch_loss < best_loss:
