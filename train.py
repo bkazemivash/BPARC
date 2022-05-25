@@ -9,14 +9,14 @@ def main():
     parser.add_argument('-n', '--network', required=True, help='Network ID') 
     parser.add_argument('-b', '--batchs', required=True, help='Batch size')  
     parser.add_argument('-w', '--workers', required=True, help='Number of workers for data loader')    
-    parser.add_argument('-e', '--epochs', required=True, help='Number of epochs for training phase')    
+    parser.add_argument('-e', '--epochs', required=True, help='Number of epochs for training phase')  
     args = parser.parse_args()
     logging.root.setLevel(logging.NOTSET)
     logging.basicConfig(level=logging.NOTSET, format="[ %(asctime)s ]  %(levelname)s : %(message)s", datefmt="%d-%b-%y %H:%M:%S")
     logging.info("Training procedure strated ...")
-    if torch.cuda.is_available():
-        logging.debug("Available processing unit ({})".format(torch.cuda.get_device_name(0)))
-    dev = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    for i in range(torch.cuda.device_count()):
+        logging.debug("Available processing unit ({})".format(torch.cuda.get_device_name(i)))
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
                       68,33,43,70,61,55,63,79,84,96,88,48,81,37,67,38,83,32,40,23,71,17,51,94,13,18,4,7]
     setting_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)) , "setting.json")
@@ -42,8 +42,10 @@ def main():
     data_pack['train'], data_pack['val'] = torch.utils.data.random_split(main_dataset, [80, 20])
     dataloaders = {x: torch.utils.data.DataLoader(data_pack[x], batch_size=int(args.batchs), shuffle=True, num_workers=int(args.workers), pin_memory=True) for x in ['train', 'val']}       
     logging.info("Model, optimizer and criterion configuration")
+    gpu_ids = list(range(torch.cuda.device_count()))
     segmentation_model = BrainSeg(i_channel=1, h_channel=[64, 32, 16, 8])
-    segmentation_model = segmentation_model.to(dev)
+    segmentation_model = torch.nn.DataParallel(segmentation_model, device_ids = gpu_ids)
+    segmentation_model = segmentation_model.cuda()
     optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=1e-3)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=1)
     criterion = torch.nn.MSELoss(reduction='sum')
