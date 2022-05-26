@@ -15,7 +15,7 @@ def main():
     logging.basicConfig(level=logging.NOTSET, format="[ %(asctime)s ]  %(levelname)s : %(message)s", datefmt="%d-%b-%y %H:%M:%S")
     logging.info("Training procedure strated ...")
     for i in range(torch.cuda.device_count()):
-        logging.debug("Available processing unit ({})".format(torch.cuda.get_device_name(i)))
+        logging.debug("Available processing unit ({} : {})".format(i, torch.cuda.get_device_name(i)))
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
                       68,33,43,70,61,55,63,79,84,96,88,48,81,37,67,38,83,32,40,23,71,17,51,94,13,18,4,7]
