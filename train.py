@@ -4,7 +4,6 @@ from torch.optim import lr_scheduler
 from lib.data_io import BrainFMRIDataset
 from lib.model import BrainSeg, BrainSegPP
 
-
 def main():
     parser = argparse.ArgumentParser(description='Training brain segmentation models')
     parser.add_argument('-n', '--network', required=True, help='Network ID') 
