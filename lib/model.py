@@ -25,7 +25,7 @@ class BrainSeg(nn.Module):
         self.layer5 = nn.Dropout3d(p=.5)
         self.layer6 = ResDecBlocks(h_channel[3], h_channel[2])
         self.layer7 = ResDecBlocks(h_channel[2], h_channel[1])
-        self.layer8 = nn.Dropout3d(p=.5)
+        self.layer8 = nn.Dropout3d(p=.1)
         self.layer9 = ResDecBlocks(h_channel[1], h_channel[0])
         self.layer10 = nn.Sequential(
             nn.ConvTranspose3d(h_channel[0], i_channel, kernel_size=3),
@@ -67,7 +67,7 @@ class BrainSegPP(nn.Module):
         self.layer5 = nn.Dropout3d(p=.5)
         self.layer6 = ResDecBlocksPP(h_channel[3], h_channel[2])
         self.layer7 = ResDecBlocksPP(h_channel[2], h_channel[1])
-        self.layer8 = nn.Dropout3d(p=.5)
+        self.layer8 = nn.Dropout3d(p=.1)
         self.layer9 = ResDecBlocksPP(h_channel[1], h_channel[0])
         self.layer10 = nn.Sequential(
             nn.ConvTranspose3d(h_channel[0], i_channel, kernel_size=3),
