@@ -1,8 +1,10 @@
 import torch, logging, argparse, os, json, time
 import pandas as pd
 from torch.optim import lr_scheduler
+from torch.autograd import Variable
 from lib.data_io import BrainFMRIDataset
-from lib.model import BrainSeg
+from lib.model import BrainSeg, BrainSegPP
+
 
 def main():
     parser = argparse.ArgumentParser(description='Training brain segmentation models')
@@ -10,12 +12,14 @@ def main():
     parser.add_argument('-b', '--batchs', required=True, help='Batch size')  
     parser.add_argument('-w', '--workers', required=True, help='Number of workers for data loader')    
     parser.add_argument('-e', '--epochs', required=True, help='Number of epochs for training phase')  
+    parser.add_argument('-s', '--status', required=True, help='Model configuration: BPARC vs BPARC++')   
     args = parser.parse_args()
     logging.root.setLevel(logging.NOTSET)
     logging.basicConfig(level=logging.NOTSET, format="[ %(asctime)s ]  %(levelname)s : %(message)s", datefmt="%d-%b-%y %H:%M:%S")
-    logging.info("Training procedure strated ...")
     for i in range(torch.cuda.device_count()):
         logging.debug("Available processing unit ({} : {})".format(i, torch.cuda.get_device_name(i)))
+    BPARC_PLUS_PLUS = bool(args.status)
+    logging.info("Training procedure strated with {}".format("BPARC++" if BPARC_PLUS_PLUS else "BPARC"))
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
                       68,33,43,70,61,55,63,79,84,96,88,48,81,37,67,38,83,32,40,23,71,17,51,94,13,18,4,7]
@@ -41,15 +45,18 @@ def main():
     data_pack = {}
     data_pack['train'], data_pack['val'] = torch.utils.data.random_split(main_dataset, [80, 20])
     dataloaders = {x: torch.utils.data.DataLoader(data_pack[x], batch_size=int(args.batchs), shuffle=True, num_workers=int(args.workers), pin_memory=True) for x in ['train', 'val']}       
-    logging.info("Model, optimizer and criterion configuration")
+    logging.info("Optimizer: Adam and Criterion: KL Divergence")
     gpu_ids = list(range(torch.cuda.device_count()))
-    segmentation_model = BrainSeg(i_channel=1, h_channel=[64, 32, 16, 8])
+    if BPARC_PLUS_PLUS:
+        segmentation_model = BrainSegPP(i_channel=1, h_channel=[64, 32, 16, 8])
+    else:
+        segmentation_model = BrainSeg(i_channel=1, h_channel=[64, 32, 16, 8])
     segmentation_model = torch.nn.DataParallel(segmentation_model, device_ids = gpu_ids)
     segmentation_model = segmentation_model.cuda()
-    optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=1e-3)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=1)
-    criterion = torch.nn.MSELoss(reduction='sum')
-    best_loss = float("Inf")
+    optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=.1)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=.1)
+    criterion = torch.nn.KLDivLoss(reduction='sum')
+    best_loss = float("inf")
     num_epochs = int(args.epochs)
     phase_error = {}
     logging.info("Start training procedure, model is running on GPU : {}".format(next(segmentation_model.parameters()).is_cuda))
@@ -68,7 +75,9 @@ def main():
                 for j in shuffled_index:
                     with torch.set_grad_enabled(phase == 'train'):
                         preds = segmentation_model(inp[...,j])
-                        loss = criterion(preds, label[...,j])
+                        masker = label[...,j].ge(0.0)
+                        loss = criterion(torch.nn.LogSoftmax(dim=-1)(torch.masked_select(preds, masker)), 
+                                         torch.nn.Softmax(dim=-1)(torch.masked_select(label[...,j], masker)))  
                         if phase == 'train':
                             loss.backward()
                             optimizer.step()

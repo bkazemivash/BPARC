@@ -66,3 +66,63 @@ class ResDecBlocks(nn.Module):
 
     def forward(self, x):
         return self.block(x)
+
+
+class ResEncBlocksPP(nn.Module):
+    """BPARC++ : Class for implementing main block of encoding procedure to map input data to lower represeantation.
+
+        Args:
+            n_channels (int): channel size of input data
+            o_channels (int): channel size of output data
+            mid_channels (object:int, optional): channel size of hidden layers. Defaults to None.    
+
+    """
+
+    def __init__(self, n_channels, o_channels, mid_channels=None):
+        super(ResEncBlocksPP, self).__init__()
+        if not mid_channels:
+            mid_channels = o_channels
+        self.block1 = nn.Sequential(
+            nn.Conv3d(n_channels, mid_channels, kernel_size=3),
+            nn.GELU(),
+            nn.BatchNorm3d(mid_channels)
+        )
+        self.block2 = nn.Sequential(
+            nn.Conv3d(mid_channels, mid_channels, kernel_size=3, padding=1),
+            nn.GELU(),
+            nn.BatchNorm3d(mid_channels),
+            nn.Conv3d(mid_channels, o_channels, kernel_size=3, padding=1),
+            nn.GELU(),
+            nn.BatchNorm3d(o_channels)
+        )
+        self.block3 = nn.Sequential(            
+            nn.MaxPool3d(3, stride=1)
+        )
+
+    def forward(self, x):
+        residual = self.block1(x)
+        out = self.block2(residual)
+        out = residual + out.clone()
+        return self.block3(out)
+
+
+class ResDecBlocksPP(nn.Module):
+    """BPARC++ : Class for implementing main block of decoding procedure to map extracted features to maps.
+
+    Args:
+        n_channels (int): channel size of input data
+        o_channels (int): channel size of output data
+    """
+    def __init__(self, n_channels, o_channels):
+        super(ResDecBlocksPP, self).__init__()
+        self.block = nn.Sequential(
+            nn.ConvTranspose3d(n_channels, o_channels, kernel_size=3),
+            nn.GELU(),
+            nn.BatchNorm3d(o_channels),
+            nn.ConvTranspose3d(o_channels, o_channels, kernel_size=3),
+            nn.GELU(),
+            nn.BatchNorm3d(o_channels)
+        )
+
+    def forward(self, x):
+        return self.block(x)
