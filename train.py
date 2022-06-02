@@ -1,16 +1,20 @@
 import torch, logging, argparse, os, json, time
 import pandas as pd
 from torch.optim import lr_scheduler
+from torch.autograd import Variable
 from lib.data_io import BrainFMRIDataset
 from lib.model import BrainSeg, BrainSegPP
 
 def main():
     parser = argparse.ArgumentParser(description='Training brain segmentation models')
     parser.add_argument('-n', '--network', required=True, help='Network ID') 
-    parser.add_argument('-b', '--batchs', required=True, help='Batch size')  
-    parser.add_argument('-w', '--workers', required=True, help='Number of workers for data loader')    
-    parser.add_argument('-e', '--epochs', required=True, help='Number of epochs for training phase')  
+    parser.add_argument('-b', '--num_batches', required=True, help='Batch size')  
+    parser.add_argument('-w', '--num_workers', required=True, help='Number of workers for data loader')    
+    parser.add_argument('-e', '--num_epochs', required=True, help='Number of epochs for training phase')  
     parser.add_argument('-s', '--status', required=True, help='Model configuration: BPARC vs BPARC++')   
+    parser.add_argument('-l', '--loss_fun', required=False, default='MSE', help='Loss function for training the model')
+    parser.add_argument('-r', '--learning_rate', required=False, default=1e-3, help='Learning rate for training the model')
+    parser.add_argument('-d', '--decay_rate', required=False, default=.1, help='Learning decay for training the model') 
     args = parser.parse_args()
     logging.root.setLevel(logging.NOTSET)
     logging.basicConfig(level=logging.NOTSET, format="[ %(asctime)s ]  %(levelname)s : %(message)s", datefmt="%d-%b-%y %H:%M:%S")
@@ -21,9 +25,12 @@ def main():
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
                       68,33,43,70,61,55,63,79,84,96,88,48,81,37,67,38,83,32,40,23,71,17,51,94,13,18,4,7]
+    loss_function = args.loss_fun
+    if not (loss_function in ['MSE', 'KLD', 'COS']):
+        raise ValueError("Loss function is not valid, only MSE, KLD, and COS are accepted!")   
     setting_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)) , "setting.json")
     if not (os.path.exists(setting_file_path)):
-        raise FileNotFoundError("Setting file not found")   
+        raise FileNotFoundError("Setting file not found")  
     with open(setting_file_path) as file:
         conf = json.load(file)
     table_file_path = os.path.abspath(conf['train_data']['file_path'])
@@ -42,8 +49,8 @@ def main():
                                     int(args.network))
     data_pack = {}
     data_pack['train'], data_pack['val'] = torch.utils.data.random_split(main_dataset, [80, 20])
-    dataloaders = {x: torch.utils.data.DataLoader(data_pack[x], batch_size=int(args.batchs), shuffle=True, num_workers=int(args.workers), pin_memory=True) for x in ['train', 'val']}       
-    logging.info("Optimizer: Adam and Criterion: KL Divergence")
+    dataloaders = {x: torch.utils.data.DataLoader(data_pack[x], batch_size=int(args.num_batches), shuffle=True, num_workers=int(args.num_workers), pin_memory=True) for x in ['train', 'val']}       
+    logging.info("Optimizer: Adam and Criterion: {}".format(loss_function))
     gpu_ids = list(range(torch.cuda.device_count()))
     if BPARC_PLUS_PLUS:
         segmentation_model = BrainSegPP(i_channel=1, h_channel=[64, 32, 16, 8])
@@ -51,12 +58,17 @@ def main():
         segmentation_model = BrainSeg(i_channel=1, h_channel=[64, 32, 16, 8])
     segmentation_model = torch.nn.DataParallel(segmentation_model, device_ids = gpu_ids)
     segmentation_model = segmentation_model.cuda()
-    optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=.1)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=.1)
-    criterion = torch.nn.KLDivLoss(reduction='sum')
+    optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=float(args.learning_rate))
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=4, gamma=float(args.decay_rate))
+    if loss_function == 'MSE':
+        criterion = torch.nn.MSELoss(reduction='sum')
+    elif loss_function == 'KLD':
+        criterion = torch.nn.KLDivLoss(reduction='sum')
+    else:
+        criterion = torch.nn.CosineEmbeddingLoss(reduction='sum')
     best_loss = float("inf")
-    num_epochs = int(args.epochs)
-    phase_error = {}
+    num_epochs = int(args.num_epochs)
+    phase_error = {'train': float("inf"), 'val': float("inf")}
     logging.info("Start training procedure, model is running on GPU : {}".format(next(segmentation_model.parameters()).is_cuda))
     for epoch in range(num_epochs):
         for phase in ['train', 'val']:
@@ -74,8 +86,14 @@ def main():
                     with torch.set_grad_enabled(phase == 'train'):
                         preds = segmentation_model(inp[...,j])
                         masker = label[...,j].ge(0.0)
-                        loss = criterion(torch.nn.LogSoftmax(dim=-1)(torch.masked_select(preds, masker)), 
-                                         torch.nn.Softmax(dim=-1)(torch.masked_select(label[...,j], masker)))  
+                        if loss_function == 'MSE':
+                            loss = criterion(torch.masked_select(preds, masker), torch.masked_select(label[...,j], masker))      
+                        elif loss_function == 'KLD': 
+                            loss = criterion(torch.nn.LogSoftmax(dim=-1)(torch.masked_select(preds, masker)), 
+                                            torch.nn.Softmax(dim=-1)(torch.masked_select(label[...,j], masker)))
+                        else:
+                            loss = criterion(torch.masked_select(preds, masker).unsqueeze(0), torch.masked_select(label[...,j], masker).unsqueeze(0), 
+                                            Variable(torch.ones(1)).cuda()) 
                         if phase == 'train':
                             loss.backward()
                             optimizer.step()
