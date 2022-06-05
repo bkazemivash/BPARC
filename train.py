@@ -1,4 +1,3 @@
-from numpy import min_scalar_type
 import torch, logging, argparse, os, json, time
 import pandas as pd
 from torch.optim import lr_scheduler
@@ -111,6 +110,7 @@ def main():
                         'optimizer': optimizer.state_dict(),
                         'loss': phase_error}, 
                         os.path.join(checkpoints_directory, 'network{}'.format(valid_networks[int(args.network)]), 'checkpoint_{}_{}.pth'.format(epoch, time.strftime("%m%d%y_%H%M%S"))))
+
 
 if __name__ == "__main__":
     main()
