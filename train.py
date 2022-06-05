@@ -1,3 +1,4 @@
+from numpy import min_scalar_type
 import torch, logging, argparse, os, json, time
 import pandas as pd
 from torch.optim import lr_scheduler
@@ -20,7 +21,7 @@ def main():
     logging.basicConfig(level=logging.NOTSET, format="[ %(asctime)s ]  %(levelname)s : %(message)s", datefmt="%d-%b-%y %H:%M:%S")
     for i in range(torch.cuda.device_count()):
         logging.debug("Available processing unit ({} : {})".format(i, torch.cuda.get_device_name(i)))
-    BPARC_PLUS_PLUS = bool(args.status)
+    BPARC_PLUS_PLUS = args.status == "True"
     logging.info("Training procedure strated with {}".format("BPARC++" if BPARC_PLUS_PLUS else "BPARC"))
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
@@ -50,7 +51,6 @@ def main():
     data_pack = {}
     data_pack['train'], data_pack['val'] = torch.utils.data.random_split(main_dataset, [80, 20])
     dataloaders = {x: torch.utils.data.DataLoader(data_pack[x], batch_size=int(args.num_batches), shuffle=True, num_workers=int(args.num_workers), pin_memory=True) for x in ['train', 'val']}       
-    logging.info("Optimizer: Adam and Criterion: {}".format(loss_function))
     gpu_ids = list(range(torch.cuda.device_count()))
     if BPARC_PLUS_PLUS:
         segmentation_model = BrainSegPP(i_channel=1, h_channel=[64, 32, 16, 8])
@@ -59,7 +59,7 @@ def main():
     segmentation_model = torch.nn.DataParallel(segmentation_model, device_ids = gpu_ids)
     segmentation_model = segmentation_model.cuda()
     optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=float(args.learning_rate))
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=4, gamma=float(args.decay_rate))
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=float(args.decay_rate))
     if loss_function == 'MSE':
         criterion = torch.nn.MSELoss(reduction='sum')
     elif loss_function == 'KLD':
@@ -67,6 +67,7 @@ def main():
     else:
         criterion = torch.nn.CosineEmbeddingLoss(reduction='sum')
     best_loss = float("inf")
+    logging.info(f"Optimizer: Adam , Criterion: {loss_function} , lr: {args.learning_rate} , decay: {args.decay_rate}")
     num_epochs = int(args.num_epochs)
     phase_error = {'train': float("inf"), 'val': float("inf")}
     logging.info("Start training procedure, model is running on GPU : {}".format(next(segmentation_model.parameters()).is_cuda))
@@ -103,7 +104,7 @@ def main():
             epoch_loss = running_loss / (len(data_pack[phase]) * inp.shape[-1])
             phase_error[phase] = epoch_loss
         logging.info("Epoch {}/{} - Train Loss: {:.10f} and Validation Loss: {:.10f}".format(epoch+1, num_epochs, phase_error['train'], phase_error['val']))
-        if phase == 'val' and epoch_loss < best_loss:
+        if phase == 'val' and epoch_loss <= best_loss:
             best_loss = epoch_loss
             torch.save({'epoch': epoch,
                         'state_dict': segmentation_model.state_dict(),
