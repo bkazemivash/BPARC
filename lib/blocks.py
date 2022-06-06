@@ -30,11 +30,10 @@ class ResEncBlocks(nn.Module):
             nn.BatchNorm3d(mid_channels),
             nn.Sigmoid(),
             nn.Conv3d(mid_channels, o_channels, kernel_size=3, padding=1),
-            nn.BatchNorm3d(o_channels),
-            nn.Sigmoid()            
+            nn.BatchNorm3d(mid_channels),
+            nn.Sigmoid()
         )
-        self.block3 = nn.Sequential(
-            nn.Sigmoid(),
+        self.block3 = nn.Sequential(            
             nn.MaxPool3d(3, stride=1)
         )
 
@@ -63,7 +62,6 @@ class ResDecBlocks(nn.Module):
             nn.Sigmoid()
         )
 
-
     def forward(self, x):
         return self.block(x)
 
@@ -84,16 +82,16 @@ class ResEncBlocksPP(nn.Module):
             mid_channels = o_channels
         self.block1 = nn.Sequential(
             nn.Conv3d(n_channels, mid_channels, kernel_size=3),
-            nn.GELU(),
-            nn.BatchNorm3d(mid_channels)
+            nn.BatchNorm3d(mid_channels),
+            nn.ReLU6()
         )
         self.block2 = nn.Sequential(
             nn.Conv3d(mid_channels, mid_channels, kernel_size=3, padding=1),
-            nn.GELU(),
             nn.BatchNorm3d(mid_channels),
+            nn.ReLU6(),
             nn.Conv3d(mid_channels, o_channels, kernel_size=3, padding=1),
-            nn.GELU(),
-            nn.BatchNorm3d(o_channels)
+            nn.BatchNorm3d(mid_channels),
+            nn.ReLU6()
         )
         self.block3 = nn.Sequential(            
             nn.MaxPool3d(3, stride=1)
@@ -117,11 +115,11 @@ class ResDecBlocksPP(nn.Module):
         super(ResDecBlocksPP, self).__init__()
         self.block = nn.Sequential(
             nn.ConvTranspose3d(n_channels, o_channels, kernel_size=3),
-            nn.GELU(),
             nn.BatchNorm3d(o_channels),
+            nn.ReLU6(),
             nn.ConvTranspose3d(o_channels, o_channels, kernel_size=3),
-            nn.GELU(),
-            nn.BatchNorm3d(o_channels)
+            nn.BatchNorm3d(o_channels),
+            nn.ReLU6()
         )
 
     def forward(self, x):
