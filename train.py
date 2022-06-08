@@ -58,7 +58,7 @@ def main():
     segmentation_model = torch.nn.DataParallel(segmentation_model, device_ids = gpu_ids)
     segmentation_model = segmentation_model.cuda()
     optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=float(args.learning_rate))
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=70, gamma=float(args.decay_rate))
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=float(args.decay_rate))
     if loss_function == 'MSE':
         criterion = torch.nn.MSELoss(reduction='sum')
     elif loss_function == 'KLD':
