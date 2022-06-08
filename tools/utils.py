@@ -4,9 +4,22 @@ This module contains mandatory functions to run different preprocessing / postpr
 images to feed them to the model or do some statistical analysis."""
 
 import numpy as np
+from torch import nn
 from nilearn.masking import unmask, apply_mask
 from nilearn import image
 from scipy import ndimage, stats
+
+
+def weights_init(layer_object: nn.Conv3d or nn.ConvTranspose3d) -> None:
+    """Function to initialize model weights using kaiming_normal method
+
+    Args:
+        layer_object (nn.Conv3d or nn.ConvTranspose3d): given model's layer
+    """
+    if isinstance(layer_object, (nn.Conv3d, nn.ConvTranspose3d)):
+        nn.init.kaiming_normal_(layer_object.weight, nonlinearity='relu')
+        nn.init.zeros_(layer_object.bias)
+   
 
 def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
     """Function to scale input array in range of [lb, ub]
@@ -18,7 +31,7 @@ def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
         ax (obj:int, optional): axis to apply scaling function. Defaults to None.
 
     Returns:
-        np.ndarray: Scaled array ranging in [lb, ub]
+        np.ndarray: scaled array ranging in [lb, ub]
     """
     return lb + ((ub - lb) * (np.subtract(ar, np.min(ar, axis=ax, keepdims=True))) / np.ptp(ar, axis=ax, keepdims=True))
     
@@ -40,13 +53,13 @@ def fmri_masking(inp_img: str, mask_img: str, ax = 1, nor = False, sc = False) -
     """Function to zscore and scale input fMRI image using a mask 
 
     Args:
-        inp_img (str): Path to a 4D Niimg-like object
-        mask_img (str): Path to a 3D Niimg-like object
-        ax (int, optional): Z-score by a specific axis; 0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI). Defaults to -1.
-        sc (bool, optional): If scaling is needed. Defaults to False.
+        inp_img (str): path to a 4D Niimg-like object
+        mask_img (str): path to a 3D Niimg-like object
+        ax (int, optional): z-score by a specific axis; 0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI). Defaults to -1.
+        sc (bool, optional): if scaling is needed. Defaults to False.
 
     Raises:
-        TypeError: If 'inp_img' or 'mask_img' is not a Niimg-like object
+        TypeError: if 'inp_img' or 'mask_img' is not a Niimg-like object
 
     Returns:
         object: a 4D Niimg-like object
@@ -69,10 +82,10 @@ def get_coordinates(inp_img: object, state=False) -> tuple:
         state (bool, optional): True if image data contains negative values, otherwise False. Defaults to False.
 
     Raises:
-        TypeError: If 'inp_img' is not a Niimg-like object
+        TypeError: if 'inp_img' is not a Niimg-like object
 
     Returns:
-        tuple: A tuple including real and transformed coordinates of amplitude
+        tuple: a tuple including real and transformed coordinates of amplitude
     """
     if not hasattr(inp_img, 'get_fdata'):
         raise TypeError("Input image is not a Nifti file, please check your input!")

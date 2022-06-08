@@ -4,6 +4,7 @@ from torch.optim import lr_scheduler
 from torch.autograd import Variable
 from lib.data_io import BrainFMRIDataset
 from lib.model import BrainSeg, BrainSegPP
+from tools.utils import weights_init
 
 def main():
     parser = argparse.ArgumentParser(description='Training brain segmentation models')
@@ -55,7 +56,10 @@ def main():
         segmentation_model = BrainSegPP(i_channel=1, h_channel=[64, 32, 16, 8])
     else:
         segmentation_model = BrainSeg(i_channel=1, h_channel=[64, 32, 16, 8])
-    segmentation_model = torch.nn.DataParallel(segmentation_model, device_ids = gpu_ids)
+    segmentation_model.apply(weights_init)
+    if torch.cuda.device_count() > 1:
+        segmentation_model = torch.nn.DataParallel(segmentation_model, device_ids = gpu_ids)
+        logging.info("Pytorch data Parallel activated.")
     segmentation_model = segmentation_model.cuda()
     optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=float(args.learning_rate))
     scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=float(args.decay_rate))
