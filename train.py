@@ -89,7 +89,7 @@ def main():
                 for j in shuffled_index:
                     with torch.set_grad_enabled(phase == 'train'):
                         preds = segmentation_model(inp[...,j])
-                        masker = label[...,j].ge(0.0)
+                        masker = label[...,j].gt(0.0)
                         if loss_function == 'MSE':
                             loss = criterion(torch.masked_select(preds, masker), torch.masked_select(label[...,j], masker))      
                         elif loss_function == 'KLD': 
