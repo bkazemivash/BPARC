@@ -11,13 +11,13 @@ from scipy import ndimage, stats
 
 
 def weights_init(layer_object: nn.Conv3d or nn.ConvTranspose3d) -> None:
-    """Function to initialize model weights using kaiming_normal method
+    """Function to initialize model weights using kaiming method
 
     Args:
         layer_object (nn.Conv3d or nn.ConvTranspose3d): given model's layer
     """
     if isinstance(layer_object, (nn.Conv3d, nn.ConvTranspose3d)):
-        nn.init.kaiming_normal_(layer_object.weight, nonlinearity='relu')
+        nn.init.kaiming_uniform_(layer_object.weight, nonlinearity='relu')
         nn.init.zeros_(layer_object.bias)
    
 
@@ -56,7 +56,8 @@ def fmri_masking(inp_img: str, mask_img: str, ax = 1, nor = False, sc = False) -
         inp_img (str): path to a 4D Niimg-like object
         mask_img (str): path to a 3D Niimg-like object
         ax (int, optional): z-score by a specific axis; 0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI). Defaults to -1.
-        sc (bool, optional): if scaling is needed. Defaults to False.
+        nor (bool, optional): True if normalization is needed. Defaults to False.
+        sc (bool, optional): True if scaling is needed. Defaults to False.
 
     Raises:
         TypeError: if 'inp_img' or 'mask_img' is not a Niimg-like object

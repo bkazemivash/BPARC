@@ -16,12 +16,14 @@ def main():
     parser.add_argument('-l', '--loss_fun', required=False, default='MSE', help='Loss function for training the model')
     parser.add_argument('-r', '--learning_rate', required=False, default=1e-3, help='Learning rate for training the model')
     parser.add_argument('-d', '--decay_rate', required=False, default=.1, help='Learning decay for training the model') 
+    parser.add_argument('-v', '--save_model', required=False, default=True, help='Flag for saving the model') 
     args = parser.parse_args()
     logging.root.setLevel(logging.NOTSET)
     logging.basicConfig(level=logging.NOTSET, format="[ %(asctime)s ]  %(levelname)s : %(message)s", datefmt="%d-%b-%y %H:%M:%S")
     for i in range(torch.cuda.device_count()):
         logging.debug("Available processing unit ({} : {})".format(i, torch.cuda.get_device_name(i)))
     BPARC_PLUS_PLUS = args.status == "True"
+    SAVE_FLAG = args.save_model == "True"
     logging.info("Training procedure strated with {}".format("BPARC++" if BPARC_PLUS_PLUS else "BPARC"))
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
@@ -84,9 +86,9 @@ def main():
             for inp, label in dataloaders[phase]:
                 inp = inp.to(dev, non_blocking=True)
                 label = label.to(dev, non_blocking=True)
-                optimizer.zero_grad()
                 shuffled_index = torch.randint(inp.shape[-1], (inp.shape[-1],))
                 for j in shuffled_index:
+                    optimizer.zero_grad()
                     with torch.set_grad_enabled(phase == 'train'):
                         preds = segmentation_model(inp[...,j])
                         masker = label[...,j].gt(0.0)
@@ -107,7 +109,7 @@ def main():
             epoch_loss = running_loss / (len(data_pack[phase]) * inp.shape[-1])
             phase_error[phase] = epoch_loss
         logging.info("Epoch {}/{} - Train Loss: {:.10f} and Validation Loss: {:.10f}".format(epoch+1, num_epochs, phase_error['train'], phase_error['val']))
-        if phase == 'val' and epoch_loss <= best_loss:
+        if phase == 'val' and epoch_loss <= best_loss and SAVE_FLAG:
             best_loss = epoch_loss
             torch.save({'epoch': epoch,
                         'state_dict': segmentation_model.state_dict(),

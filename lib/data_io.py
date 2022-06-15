@@ -4,7 +4,6 @@ import scipy.io as iom
 import torch, os, sys
 from torch.utils.data import Dataset
 from torchvision import transforms
-from nilearn.image import load_img
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from tools.utils import fmri_masking
 
