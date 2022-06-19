@@ -64,7 +64,7 @@ def main():
         logging.info("Pytorch data Parallel activated.")
     segmentation_model = segmentation_model.cuda()
     optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=float(args.learning_rate))
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=float(args.decay_rate))
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=float(args.decay_rate))
     if loss_function == 'MSE':
         criterion = torch.nn.MSELoss(reduction='sum')
     elif loss_function == 'KLD':
