@@ -64,7 +64,7 @@ def main():
         logging.info("Pytorch data Parallel activated.")
     segmentation_model = segmentation_model.cuda()
     optimizer = torch.optim.Adam(segmentation_model.parameters(), lr=float(args.learning_rate))
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=float(args.decay_rate))
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=40, gamma=float(args.decay_rate))
     if loss_function == 'MSE':
         criterion = torch.nn.MSELoss(reduction='sum')
     elif loss_function == 'KLD':
@@ -87,9 +87,9 @@ def main():
                 inp = inp.to(dev, non_blocking=True)
                 label = label.to(dev, non_blocking=True)
                 shuffled_index = torch.randint(inp.shape[-1], (inp.shape[-1],))
-                for j in shuffled_index:
-                    optimizer.zero_grad()
-                    with torch.set_grad_enabled(phase == 'train'):
+                with torch.set_grad_enabled(phase == 'train'):
+                    for j in shuffled_index:
+                        optimizer.zero_grad()
                         preds = segmentation_model(inp[...,j])
                         masker = label[...,j].gt(0.0)
                         if loss_function == 'MSE':
@@ -103,7 +103,7 @@ def main():
                         if phase == 'train':
                             loss.backward()
                             optimizer.step()
-                    running_loss += loss.item()                     
+                        running_loss += loss.item()                     
             if phase == 'train':
                 scheduler.step()
             epoch_loss = running_loss / (len(data_pack[phase]) * inp.shape[-1])
