@@ -17,7 +17,7 @@ def weights_init(layer_object: nn.Conv3d or nn.ConvTranspose3d) -> None:
         layer_object (nn.Conv3d or nn.ConvTranspose3d): given model's layer
     """
     if isinstance(layer_object, (nn.Conv3d, nn.ConvTranspose3d)):
-        nn.init.kaiming_uniform_(layer_object.weight, nonlinearity='relu')
+        nn.init.kaiming_normal_(layer_object.weight, nonlinearity='relu')
         nn.init.zeros_(layer_object.bias)
    
 
