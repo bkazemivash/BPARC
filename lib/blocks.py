@@ -33,7 +33,8 @@ class ResEncBlocks(nn.Module):
             nn.BatchNorm3d(mid_channels),
             nn.Sigmoid()
         )
-        self.block3 = nn.Sequential(            
+        self.block3 = nn.Sequential( 
+            nn.Sigmoid(),           
             nn.MaxPool3d(3, stride=1)
         )
 
