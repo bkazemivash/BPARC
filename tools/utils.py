@@ -10,15 +10,18 @@ from nilearn import image
 from scipy import ndimage, stats
 
 
-def weights_init(layer_object: nn.Conv3d or nn.ConvTranspose3d) -> None:
+def weights_init(layer: nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d) -> None:
     """Function to initialize model weights using kaiming method
 
     Args:
-        layer_object (nn.Conv3d or nn.ConvTranspose3d): given model's layer
+        layer (nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d): given model's layer
     """
-    if isinstance(layer_object, (nn.Conv3d, nn.ConvTranspose3d)):
-        nn.init.kaiming_uniform_(layer_object.weight, nonlinearity='relu')
-        nn.init.zeros_(layer_object.bias)
+    if isinstance(layer, (nn.Conv3d, nn.ConvTranspose3d)):
+        nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
+        nn.init.zeros_(layer.bias)
+    elif isinstance(layer, nn.BatchNorm3d):
+        nn.init.ones_(layer.weight)
+        nn.init.zeros_(layer.bias)       
    
 
 def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
