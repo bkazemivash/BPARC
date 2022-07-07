@@ -10,18 +10,22 @@ from nilearn import image
 from scipy import ndimage, stats
 
 
-def weights_init(layer: nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d) -> None:
+def weights_init(m: nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Linear) -> None:
     """Function to initialize model weights using kaiming method
 
     Args:
-        layer (nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d): given model's layer
+        m (nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Linear): given model's layer
     """
-    if isinstance(layer, (nn.Conv3d, nn.ConvTranspose3d)):
-        nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
-        nn.init.zeros_(layer.bias)
-    elif isinstance(layer, nn.BatchNorm3d):
-        nn.init.ones_(layer.weight)
-        nn.init.zeros_(layer.bias)       
+    if isinstance(m, (nn.Conv3d, nn.ConvTranspose3d)):
+        nn.init.kaiming_uniform_(m.weight.data,nonlinearity='relu')
+        if m.bias is not None:
+            nn.init.constant_(m.bias.data, 0)
+    elif isinstance(m, nn.BatchNorm3d):
+        nn.init.constant_(m.weight.data, 1)
+        nn.init.constant_(m.bias.data, 0)
+    elif isinstance(m, nn.Linear):
+        nn.init.kaiming_uniform_(m.weight.data)
+        nn.init.constant_(m.bias.data, 0)     
    
 
 def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
