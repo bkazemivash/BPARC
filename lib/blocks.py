@@ -1,7 +1,7 @@
-"""Module contains all backbone blocks like Residual Encoding Blocks, Residual Decoding Blocks and Atrous Spatial Pyramid Pooling, Base residual units.
-
-ResDecBlocks class encodes input data into lower representation which is used by ResDecBlocks
-which decodes the extracted features to reconstruct the output with same size as input. """
+"""Module contains all backbone units like Residual Encoding Blocks, Residual Decoding Blocks and 
+Atrous Spatial Pyramid Pooling, Base residual blocks. In this module ResDecBlocks class encodes input 
+into lower representation which is used by ResDecBlocks which decodes the extracted features to 
+reconstruct the output with same size as input. """
 
 import torch
 from torch import nn
@@ -46,7 +46,8 @@ class AtrousSpatialPyramidPooling(nn.Module):
 
 
 class FullyPreactivatedResidualUnit(nn.Module):
-    """BPARC++ : Class for implementing residual unit with full pre-activation based on https://arxiv.org/pdf/1603.05027.pdf and https://arxiv.org/abs/1512.03385.
+    """BPARC++ : Class for implementing residual unit with full pre-activation based on 
+    https://arxiv.org/pdf/1603.05027.pdf and https://arxiv.org/abs/1512.03385.
 
     Args:
         in_ch (int): channel size of input layer
@@ -106,13 +107,12 @@ class StemUnit(nn.Module):
 
 
 class ResEncBlocks(nn.Module):
-    """Class for implementing main block of encoding procedure to map input data to lower represeantation.
+    """BPARC : Class for implementing main block of encoding procedure to map input data to lower represeantation.
 
         Args:
             in_ch (int): channel size of input layer
             out_ch (int): channel size of output layer
             mid_ch (int, optional): channel size of hidden layer. Defaults to None.
-
     """
     def __init__(self, in_ch, out_ch, mid_ch=None):
         super(ResEncBlocks, self).__init__()
@@ -144,7 +144,7 @@ class ResEncBlocks(nn.Module):
 
 
 class ResDecBlocks(nn.Module):
-    """Class for implementing main block of decoding procedure to map extracted features to maps.
+    """BPARC : Class for implementing main block of decoding procedure to map extracted features to maps.
 
     Args:
         in_ch (int): channel size of input layer
