@@ -55,26 +55,24 @@ class FullyPreactivatedResidualUnit(nn.Module):
         mid_ch (int, optional): channel size of hidden layer. Defaults to None.
         downsample (int, optional): downsampling rate to control stride. Defaults to 1.
     """
-    def __init__(self, in_ch, out_ch, mid_ch=None, downsample=1):
+    def __init__(self, in_ch, out_ch, downsample=1):
         super(FullyPreactivatedResidualUnit, self).__init__()
-        if not mid_ch:
-            mid_ch = out_ch
         self.stage1 = nn.Sequential(
             nn.BatchNorm3d(in_ch),
             nn.ReLU(),        
-            nn.Conv3d(in_ch, mid_ch, kernel_size=1, stride=downsample, bias=False)
+            nn.Conv3d(in_ch, out_ch, kernel_size=1, stride=downsample, bias=False)
         )
         self.stage2 = nn.Sequential(
-            nn.BatchNorm3d(mid_ch),
+            nn.BatchNorm3d(out_ch),
             nn.ReLU(),        
-            nn.Conv3d(mid_ch, mid_ch, kernel_size=3, padding=1, bias=False)
+            nn.Conv3d(out_ch, out_ch, kernel_size=3, padding=1, bias=False)
         )
         self.stage3 = nn.Sequential(
-            nn.BatchNorm3d(mid_ch),
+            nn.BatchNorm3d(out_ch),
             nn.ReLU(),        
-            nn.Conv3d(mid_ch, mid_ch, kernel_size=1, bias=False)
+            nn.Conv3d(out_ch, out_ch, kernel_size=1, bias=False)
         )        
-        self.shortcut = nn.Conv3d(in_ch, mid_ch, kernel_size=1, stride=downsample, bias=False) if downsample > 1 else nn.Identity()
+        self.shortcut = nn.Conv3d(in_ch, out_ch, kernel_size=1, stride=downsample, bias=False) if downsample > 1 else nn.Identity()
 
     def forward(self, x):
         out = self.stage1(x)
@@ -99,7 +97,7 @@ class StemUnit(nn.Module):
             nn.BatchNorm3d(in_ch),
             nn.ReLU(),
             nn.Conv3d(in_ch, out_ch, kernel_size=3, padding=1, stride=downsample, bias=False),
-            nn.MaxPool3d(3)
+            nn.MaxPool3d(2)
         )        
 
     def forward(self, x):
