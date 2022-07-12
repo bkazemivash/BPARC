@@ -86,7 +86,7 @@ class FullyPreactivatedResidualUnit(nn.Module):
 
 class StemUnit(nn.Module):
     def __init__(self, in_ch, out_ch, downsample=1):
-        """_summary_  https://arxiv.org/abs/1812.01187
+        """BPARC++ : Class for implementing entry unit based on https://arxiv.org/abs/1812.01187
 
         Args:
             in_ch (int): channel size of input layer
