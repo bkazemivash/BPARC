@@ -14,7 +14,7 @@ class AtrousSpatialPyramidPooling(nn.Module):
         in_ch (int): channel size of input layer
         out_ch (int): channel size of hidden layers
     """
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super(AtrousSpatialPyramidPooling, self).__init__()
         self.global_pooling = nn.Sequential(
             nn.AvgPool3d(kernel_size=3),
@@ -55,7 +55,7 @@ class FullyPreactivatedResidualUnit(nn.Module):
         mid_ch (int, optional): channel size of hidden layer. Defaults to None.
         downsample (int, optional): downsampling rate to control stride. Defaults to 1.
     """
-    def __init__(self, in_ch, out_ch, downsample=1):
+    def __init__(self, in_ch, out_ch, downsample=1) -> None:
         super(FullyPreactivatedResidualUnit, self).__init__()
         self.stage1 = nn.Sequential(
             nn.BatchNorm3d(in_ch),
@@ -84,7 +84,7 @@ class FullyPreactivatedResidualUnit(nn.Module):
 
 
 class StemUnit(nn.Module):
-    def __init__(self, in_ch, out_ch, downsample=1):
+    def __init__(self, in_ch, out_ch, downsample=1) -> None:
         """BPARC++ : Class for implementing entry unit based on https://arxiv.org/abs/1812.01187
 
         Args:
@@ -112,7 +112,7 @@ class ResEncBlocks(nn.Module):
             out_ch (int): channel size of output layer
             mid_ch (int, optional): channel size of hidden layer. Defaults to None.
     """
-    def __init__(self, in_ch, out_ch, mid_ch=None):
+    def __init__(self, in_ch, out_ch, mid_ch=None) -> None:
         super(ResEncBlocks, self).__init__()
         if not mid_ch:
             mid_ch = out_ch
@@ -148,7 +148,7 @@ class ResDecBlocks(nn.Module):
         in_ch (int): channel size of input layer
         out_ch (int): channel size of output layer
     """
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch) -> None:
         super(ResDecBlocks, self).__init__()
         self.block = nn.Sequential(
             nn.ConvTranspose3d(in_ch, out_ch, kernel_size=3),
