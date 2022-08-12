@@ -1,5 +1,5 @@
 # BPARC
-A supervised image segmentation framework implemented in python to perform brain parcellation on fMRI data (Functional magnetic resonance imaging) utilizing --- and former BPARC models.
+A supervised image segmentation framework implemented in python to perform brain parcellation on fMRI data (Functional magnetic resonance imaging) utilizing [TBA] and former BPARC models.
 
 ## References
 
