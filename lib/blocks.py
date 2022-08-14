@@ -1,7 +1,5 @@
-"""Module contains all backbone units like Residual Encoding Blocks, Residual Decoding Blocks and 
-Atrous Spatial Pyramid Pooling, Base residual blocks. In this module ResDecBlocks class encodes input 
-into lower representation which is used by ResDecBlocks which decodes the extracted features to 
-reconstruct the output with same size as input. """
+"""Module contains all backbone units like Residual Encoding Block, Residual Decoding Block, 
+Atrous Spatial Pyramid Pooling, and residual units which can be grouped together to form the whole model. """
 
 import torch
 from torch import nn
