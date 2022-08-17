@@ -6,7 +6,7 @@ from torch import nn
 
 
 class AtrousSpatialPyramidPooling(nn.Module):
-    """BPARC++ : Class for implementing ASPP based on https://arxiv.org/abs/1706.05587.
+    """Scepter : Class for implementing ASPP based on https://arxiv.org/abs/1706.05587.
 
     Args:
         in_ch (int): channel size of input layer
@@ -44,7 +44,7 @@ class AtrousSpatialPyramidPooling(nn.Module):
 
 
 class FullyPreactivatedResidualUnit(nn.Module):
-    """BPARC++ : Class for implementing residual unit with full pre-activation based on 
+    """Scepter : Class for implementing residual unit with full pre-activation based on 
     https://arxiv.org/pdf/1603.05027.pdf and https://arxiv.org/abs/1512.03385.
 
     Args:
@@ -83,7 +83,7 @@ class FullyPreactivatedResidualUnit(nn.Module):
 
 class StemUnit(nn.Module):
     def __init__(self, in_ch, out_ch, downsample=1) -> None:
-        """BPARC++ : Class for implementing entry unit based on https://arxiv.org/abs/1812.01187
+        """Scepter : Class for implementing entry unit based on https://arxiv.org/abs/1812.01187
 
         Args:
             in_ch (int): channel size of input layer

@@ -3,7 +3,7 @@ import pandas as pd
 from torch.optim import lr_scheduler
 from torch.autograd import Variable
 from lib.data_io import BrainFMRIDataset
-from lib.model import BrainSeg, BrainSegPP
+from lib.brain_segmentation import BrainSeg
 from tools.utils import weights_init
 
 def main():

@@ -18,7 +18,7 @@ import torch, os, argparse, logging, time, json
 import pandas as pd
 from nilearn.image import load_img, new_img_like
 from tools.utils import apply_norm_scale_fMRI, image_masking
-from lib.model import BrainSeg
+from lib.brain_segmentation import BrainSeg
 
 
 def load_model(model_path: str) -> BrainSeg:
