@@ -4,6 +4,7 @@ from torch.optim import lr_scheduler
 from torch.autograd import Variable
 from lib.data_io import BrainFMRIDataset
 from lib.brain_segmentation import BrainSeg
+from lib.scepter import ScepterSeg
 from tools.utils import weights_init
 
 def main():
@@ -12,7 +13,7 @@ def main():
     parser.add_argument('-b', '--num_batches', required=True, help='Batch size')  
     parser.add_argument('-w', '--num_workers', required=True, help='Number of workers for data loader')    
     parser.add_argument('-e', '--num_epochs', required=True, help='Number of epochs for training phase')  
-    parser.add_argument('-s', '--status', required=True, help='Model configuration: BPARC vs BPARC++')   
+    parser.add_argument('-s', '--status', required=True, help='Model configuration: base model vs Scepter')   
     parser.add_argument('-l', '--loss_fun', required=False, default='MSE', help='Loss function for training the model')
     parser.add_argument('-r', '--learning_rate', required=False, default=1e-3, help='Learning rate for training the model')
     parser.add_argument('-d', '--decay_rate', required=False, default=.1, help='Learning decay for training the model') 
@@ -24,7 +25,7 @@ def main():
         logging.debug("Available processing unit ({} : {})".format(i, torch.cuda.get_device_name(i)))
     BPARC_PLUS_PLUS = args.status == "True"
     SAVE_FLAG = args.save_model == "True"
-    logging.info("Training procedure strated with {}".format("BPARC++" if BPARC_PLUS_PLUS else "BPARC"))
+    logging.info("Training procedure strated with {}".format("Scepter model" if BPARC_PLUS_PLUS else "Base model"))
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     valid_networks = [69,53,98,99,45,21,56,3,9,2,11,27,54,66,80,72,16,5,62,15,12,93,20,8,77,
                       68,33,43,70,61,55,63,79,84,96,88,48,81,37,67,38,83,32,40,23,71,17,51,94,13,18,4,7]
@@ -55,7 +56,7 @@ def main():
     dataloaders = {x: torch.utils.data.DataLoader(data_pack[x], batch_size=int(args.num_batches), shuffle=True, num_workers=int(args.num_workers), pin_memory=True) for x in ['train', 'val']}       
     gpu_ids = list(range(torch.cuda.device_count()))
     if BPARC_PLUS_PLUS:
-        segmentation_model = BrainSegPP(i_channel=1, h_channel=[64, 32, 16, 8])
+        segmentation_model = ScepterSeg(i_channel=1, h_channel=[64, 32, 16, 8])
     else:
         segmentation_model = BrainSeg(i_channel=1, h_channel=[64, 32, 16, 8])
     segmentation_model.apply(weights_init)
