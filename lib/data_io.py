@@ -31,7 +31,7 @@ class BrainFMRIDataset(Dataset):
         component_id (int): target brain network
         min_max_scale (bool, optional): scale input data range [0,1]. Defaults to True.
     """    
-    def __init__(self, images_path: list, components_path: list, processing_info: list, mask_path: str, valid_components: list, component_id: int, min_max_scale=True):
+    def __init__(self, images_path: list, components_path: list, processing_info: list, mask_path: str, valid_components: list, component_id: int, min_max_scale=False):
         self.images = images_path
         self.ica_maps = components_path
         self.ica_informaion = processing_info
@@ -48,9 +48,9 @@ class BrainFMRIDataset(Dataset):
     def _ica_prior_load(self, subject_ind: int) -> torch.Tensor:    
         param = torch.Tensor(self.verified_components) - 1
         file_content = iom.loadmat(self.ica_maps[subject_ind])
-        norm_l1 = torch.abs(torch.einsum('nmk,mjk->njk', torch.Tensor(file_content['ic'])[param.long(),:].T.unsqueeze(1), 
-                            torch.Tensor(file_content['tc']) [:,param.long()].unsqueeze(0)))
-        norm_l1 = torch.div(norm_l1[:,:,self.ica_map_id], norm_l1.sum(axis=-1)).float()
+        norm_l1 = torch.einsum('nmk,mjk->njk', torch.Tensor(file_content['ic'])[param.long(),:].T.unsqueeze(1), 
+                            torch.Tensor(file_content['tc']) [:,param.long()].unsqueeze(0))
+        norm_l1 = torch.div(torch.abs(norm_l1[:,:,self.ica_map_id]), torch.abs(norm_l1).sum(axis=-1)).float() if self.scaling else torch.Tensor(norm_l1[:,:,self.ica_map_id])
         file_content = iom.loadmat(self.ica_informaion[subject_ind])        
         vol_indices = torch.Tensor(file_content['sesInfo'][0,0]['mask_ind']).ravel() - 1
         map4d = torch.zeros(torch.prod(torch.Tensor(IMAGE_SIZE[:3])).long(), IMAGE_SIZE[-1], dtype=torch.float32)
