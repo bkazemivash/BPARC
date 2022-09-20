@@ -1,4 +1,4 @@
-# BPARC
+# Scepter
 A supervised image segmentation framework implemented in python to perform brain parcellation on fMRI data (Functional magnetic resonance imaging) utilizing different methods. We merged previous "BPARC" with "Scepter" framework which is improved by new model and features.
 
 ## References
