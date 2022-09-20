@@ -6,7 +6,7 @@ to predict brain networks in different domains."""
 from torch import nn 
 from blocks import ResEncBlocks, ResDecBlocks
 
-class BrainSeg(nn.Module):
+class BaseSegmentationModel(nn.Module):
     """Class for implementing brain segmentation model by assembling encoding/decoding blocks.
 
     Args:
@@ -14,7 +14,7 @@ class BrainSeg(nn.Module):
         h_channel (int): Size of hidden channels
     """    
     def __init__(self, i_channel, h_channel):
-        super(BrainSeg, self).__init__()
+        super(BaseSegmentationModel, self).__init__()
         self.layer1 = nn.Sequential(
             nn.Conv3d(i_channel, h_channel[0], kernel_size=3),            
             nn.Sigmoid()
