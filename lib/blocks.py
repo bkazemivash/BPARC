@@ -6,7 +6,7 @@ from torch import nn
 
 
 class AtrousSpatialPyramidPooling(nn.Module):
-    """Scepter : Class for implementing ASPP based on https://arxiv.org/abs/1706.05587.
+    """Class of Atrous Spatial Pyramid Pooling (ASPP) based on https://arxiv.org/abs/1706.05587.
 
     Args:
         in_ch (int): channel size of input layer
@@ -44,7 +44,7 @@ class AtrousSpatialPyramidPooling(nn.Module):
 
 
 class FullyPreactivatedResidualUnit(nn.Module):
-    """Scepter : Class for implementing residual unit with full pre-activation based on 
+    """Class of residual unit with full pre-activation based on 
     https://arxiv.org/pdf/1603.05027.pdf and https://arxiv.org/abs/1512.03385.
 
     Args:
@@ -83,7 +83,7 @@ class FullyPreactivatedResidualUnit(nn.Module):
 
 class StemUnit(nn.Module):
     def __init__(self, in_ch, out_ch, downsample=1) -> None:
-        """Scepter : Class for implementing entry unit based on https://arxiv.org/abs/1812.01187
+        """Class of entry unit based on https://arxiv.org/abs/1812.01187
 
         Args:
             in_ch (int): channel size of input layer
@@ -103,7 +103,7 @@ class StemUnit(nn.Module):
 
 
 class ResEncBlocks(nn.Module):
-    """BPARC : Class for implementing main block of encoding procedure to map input data to lower represeantation.
+    """Class base encoding block for mapping input data to the represeantation.
 
         Args:
             in_ch (int): channel size of input layer
@@ -140,7 +140,7 @@ class ResEncBlocks(nn.Module):
 
 
 class ResDecBlocks(nn.Module):
-    """BPARC : Class for implementing main block of decoding procedure to map extracted features to maps.
+    """Class of decoding block for mapping lower dimensional features to score maps.
 
     Args:
         in_ch (int): channel size of input layer
