@@ -1,5 +1,5 @@
 # BPARC
-A supervised brain parcellation framework for studying spatiotemporal brain dynamics using fMRI data (Functional magnetic resonance imaging).
+A weakly supervised brain parcellation framework for studying spatiotemporal brain dynamics using fMRI data (Functional magnetic resonance imaging).
 
 ## References
 
