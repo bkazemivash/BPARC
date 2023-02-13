@@ -1,20 +1,22 @@
-"""Functions for processing and visualizing 3D/4D Niimg-like object.
+"""Functions for processing and visualization.
 
 This module contains mandatory functions to run different preprocessing / postprocessing steps on input fMRI 
-images to feed them to the model or do some statistical analysis."""
+images."""
 
 import numpy as np
+import operator
 from torch import nn
 from nilearn.masking import unmask, apply_mask
 from nilearn import image
 from scipy import ndimage, stats
+from functools import reduce
 
 
 def weights_init(m: nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Linear) -> None:
     """Function to initialize model weights using kaiming method
 
     Args:
-        m (nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Linear): given model's layer
+        m (nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Linear): model layers
     """
     if isinstance(m, (nn.Conv3d, nn.ConvTranspose3d)):
         nn.init.kaiming_uniform_(m.weight.data,nonlinearity='relu')
@@ -27,15 +29,25 @@ def weights_init(m: nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Line
         nn.init.kaiming_uniform_(m.weight.data)
         nn.init.constant_(m.bias.data, 0)     
    
+def tuple_prod(inp: tuple[int]):
+    """Function multiplies all elements of the input tuple.
+       -- Equivalent to numpy.prod, but with lower running time in our case
+    Args:
+        inp (tuple[int]): input tuple
 
-def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
+    Returns:
+        int: multiplication of all elements
+    """    
+    return reduce(operator.mul, inp, 1)
+
+def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = -1) -> np.ndarray:
     """Function to scale input array in range of [lb, ub]
 
     Args:
         ar (np.ndarray): input array to be scaled
         lb (int, optional): lower bound of scaling function. Defaults to 0.
         ub (int, optional): upper bound of scaling function. Defaults to 1.        
-        ax (obj:int, optional): axis to apply scaling function. Defaults to None.
+        ax (int, optional): axis to apply scaling function. Defaults to -1.
 
     Returns:
         np.ndarray: scaled array ranging in [lb, ub]
@@ -43,7 +55,7 @@ def scale_array(ar: np.ndarray, lb = 0, ub = 1, ax = None) -> np.ndarray:
     return lb + ((ub - lb) * (np.subtract(ar, np.min(ar, axis=ax, keepdims=True))) / np.ptp(ar, axis=ax, keepdims=True))
     
 
-def normalize_array(ar: np.ndarray, ax = None) -> np.ndarray:
+def normalize_array(ar: np.ndarray, ax = -1) -> np.ndarray:
     """Function to z-score input array
 
     Args:
@@ -57,12 +69,12 @@ def normalize_array(ar: np.ndarray, ax = None) -> np.ndarray:
 
 
 def fmri_masking(inp_img: str, mask_img: str, ax = 1, nor = False, sc = False) -> object:
-    """Function to zscore and scale input fMRI image using a mask 
+    """Function to z-score and scale input fMRI image using a mask 
 
     Args:
         inp_img (str): path to a 4D Niimg-like object
         mask_img (str): path to a 3D Niimg-like object
-        ax (int, optional): z-score by a specific axis; 0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI). Defaults to -1.
+        ax (int, optional): z-score by a specific axis; 0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI). Defaults to 1.
         nor (bool, optional): True if normalization is needed. Defaults to False.
         sc (bool, optional): True if scaling is needed. Defaults to False.
 
@@ -103,4 +115,3 @@ def get_coordinates(inp_img: object, state=False) -> tuple:
         data = np.abs(data)
     key_points = ndimage.maximum_position(data)
     return key_points, image.coord_transform(*key_points, inp_img.affine)
-
