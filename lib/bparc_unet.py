@@ -12,7 +12,7 @@ class BaseUnetModel(nn.Module):
         use_drop (bool, optional): using drop out layer. Defaults to False.
         drop_ratio (float, optional): drop out ratio. Defaults to .5.
     """  
-    def __init__(self, in_dim, hidden_dim, kernel=3, use_drop=False, drop_ratio=.2):      
+    def __init__(self, kernel=3, use_drop=False, drop_ratio=.2):      
         super(BaseUnetModel, self).__init__()
         self.stage1 = EntryUnit(1, 8)
         self.stage2 = ResEncBlocks(8, 16)
@@ -44,7 +44,7 @@ class BaseUnetModel(nn.Module):
 
 class EntryUnit(nn.Module):
     def __init__(self, in_dim, hidden_dim, kernel=3):
-        """Class of entry unit - similar to StemUnit
+        """Implementation of entry unit - similar to StemUnit
 
         Args:
             in_dim (int): size of input
@@ -62,7 +62,7 @@ class EntryUnit(nn.Module):
 
 class FinalUnit(nn.Module):
     def __init__(self, in_dim, hidden_dim, kernel=3):
-        """Class of final unit
+        """Implementation of final unit
 
         Args:
             in_dim (int): size of input
@@ -72,7 +72,7 @@ class FinalUnit(nn.Module):
         super(FinalUnit, self).__init__()
         self.stage1 = nn.Sequential(
             nn.ConvTranspose3d(in_dim, hidden_dim, kernel_size=kernel, bias=False),
-            nn.ReLU()
+            nn.ReLU6()
         )        
 
     def forward(self, x):
