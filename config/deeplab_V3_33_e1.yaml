@@ -1,0 +1,27 @@
+EXPERIMENT:
+  TAG: deeplab_V3_33_preActivation_ASPP_modified_version
+  NETWORK_ID: 10
+  SAVE_MODEL: True
+MODEL:
+  TYPE: DeepLab
+  NAME: deeplab_V3_33
+  DROP_OUT: True
+  DROP_RATE: 0.5
+  KERNEL_SIZE: 3
+  BATCH_NORM: True
+DATASET:
+  NAME: UKBiobank
+  SAMPLE_SIZE: 150
+  IMAGE_SIZE: (53, 63, 52, 490)
+TRAIN:
+  EPOCHS: 200
+  EARLY_STOPP: True
+  WARMUP_EPOCHS: 10
+  BASE_LR: 1e-4
+  WARMUP_LR: 3e-7
+  MIN_LR: 5e-6
+  WEIGHT_DECAY: 0.01
+  BATCH_SIZE: 5
+  WORKERS: 4
+  LOSS: KLD
+
