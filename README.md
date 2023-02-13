@@ -1,5 +1,5 @@
 # BPARC
-A weakly supervised dense prediction framework for brain parcellation and studying spatiotemporal brain dynamics using fMRI data (Functional magnetic resonance imaging).
+Supervised brain parcellation framework for encoding spatiotemporal brain dynamism using fMRI data.
 
 ## References
 
