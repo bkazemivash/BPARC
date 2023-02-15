@@ -4,7 +4,7 @@ import pandas as pd
 from torch.optim import lr_scheduler
 from torch.autograd import Variable
 from torch.utils.data import random_split, DataLoader
-from torch.nn.parallel import DistributedDataParallel
+from torch.nn.parallel import DataParallel
 from torch.nn import CosineSimilarity
 from lib.data_io import BrainFMRIDataset
 from lib.bparc_unet import BaseUnetModel
@@ -36,24 +36,24 @@ def main():
     if not (os.path.exists(args.train_set)):
         raise FileNotFoundError(f"DataTable: file not found: {args.train_set}") 
     if not (os.path.exists(args.save_dir)):
-        raise FileNotFoundError(f"Save directory does not exist, {args.save_model}")  
+        raise FileNotFoundError(f"Save directory does not exist, {args.save_dir}")  
     
     logging.info("Loading configuration data ...")
     conf = OmegaConf.load(args.config)
     save_flag = conf.EXPERIMENT.SAVE_MODEL == "True"
     valid_networks = tuple(conf.DATASET.VALID_NETWORKS)
-    checkpoints_directory = os.path.abspath(conf.save_dir)
-    mask_file_path = os.path.abspath(conf.mask)
+    checkpoints_directory = os.path.abspath(args.save_dir)
+    mask_file_path = os.path.abspath(args.mask)
     sample_size = int(conf.DATASET.SAMPLE_SIZE)
     sample_shape = tuple(conf.DATASET.IMAGE_SIZE)
     network_index = int(conf.EXPERIMENT.NETWORK_ID) - 1
-    train_data = pd.read_pickle(conf.train_set)[:sample_size]
+    train_data = pd.read_pickle(args.train_set)[:sample_size]
     logging.info("Loading subjects fMRI files and component maps")
     main_dataset = BrainFMRIDataset(train_data['fMRI'].tolist(),train_data['components'].tolist(),
                                     train_data['side'].tolist(), mask_file_path, valid_networks,
                                     network_index, sample_shape, True)
     data_pack = {}
-    data_pack['train'], data_pack['val'] = random_split(main_dataset, [.8, .2], generator=torch.Generator().manual_seed(70))
+    data_pack['train'], data_pack['val'] = random_split(main_dataset, [80, 20], generator=torch.Generator().manual_seed(70))
     dataloaders = {x: DataLoader(data_pack[x], batch_size=int(conf.TRAIN.BATCH_SIZE), shuffle=True, num_workers=int(conf.TRAIN.WORKERS), pin_memory=True) for x in ['train', 'val']}       
     gpu_ids = list(range(torch.cuda.device_count()))
     base_model = BaseUnetModel(kernel=int(conf.MODEL.KERNEL_SIZE), 
@@ -61,7 +61,7 @@ def main():
                                 drop_ratio=float(conf.MODEL.DROP_RATE))
     base_model.apply(weights_init)
     if torch.cuda.device_count() > 1:
-        base_model = DistributedDataParallel(base_model, device_ids = gpu_ids)
+        base_model = DataParallel(base_model, device_ids = gpu_ids)
         logging.info("Pytorch Distributed Data Parallel activated using gpus: {gpu_ids}")
     if torch.cuda.is_available():
         base_model = base_model.cuda()
