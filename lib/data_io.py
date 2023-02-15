@@ -2,6 +2,7 @@
 
 import torch
 import scipy.io as iom
+from typing import Tuple 
 from torch.utils.data import Dataset
 from torchvision import transforms
 from tools.utils import fmri_masking, tuple_prod
@@ -28,7 +29,8 @@ class BrainFMRIDataset(Dataset):
         component_id (int): target brain network
         min_max_scale (bool, optional): scale input volume in range [0,1]. Defaults to True.
     """    
-    def __init__(self, image_dir: list, component_dir: list, processing_info: list, mask_path: str, valid_components: list, component_id: int, image_size: tuple[int], min_max_scale=False):
+    def __init__(self, image_dir: list, component_dir: list, processing_info: list, mask_path: str, 
+                valid_components: Tuple[int,...], component_id: int, image_size: Tuple[int,...], min_max_scale=False):
         self.images = image_dir
         self.ica_maps = component_dir
         self.ica_informaion = processing_info
@@ -46,9 +48,9 @@ class BrainFMRIDataset(Dataset):
     def _ica_prior_load(self, subject_ind: int) -> torch.Tensor:    
         param = torch.Tensor(self.verified_components) - 1
         file_content = iom.loadmat(self.ica_maps[subject_ind])
-        uniform_cdf = torch.einsum('nmk,mjk->njk', torch.Tensor(file_content['ic'])[param.long(),:].T.unsqueeze(1), 
+        data_cube = torch.einsum('nmk,mjk->njk', torch.Tensor(file_content['ic'])[param.long(),:].T.unsqueeze(1), 
                             torch.Tensor(file_content['tc']) [:,param.long()].unsqueeze(0))
-        uniform_cdf = torch.div(torch.abs(uniform_cdf[:,:,self.ica_map_id]), torch.abs(uniform_cdf).sum(axis=-1)).float()
+        uniform_cdf = torch.div(torch.abs(data_cube[:,:,self.ica_map_id]), torch.abs(data_cube).sum(axis=-1)).float()
         file_content = iom.loadmat(self.ica_informaion[subject_ind])        
         vol_indices = torch.Tensor(file_content['sesInfo'][0,0]['mask_ind']).ravel() - 1
         map4d = torch.zeros(tuple_prod(self.image_size[:3]), self.image_size[-1], dtype=torch.float32)

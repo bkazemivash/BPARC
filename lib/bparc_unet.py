@@ -10,22 +10,22 @@ class BaseUnetModel(nn.Module):
         hidden_dim (int): size of hidden layer
         kernel (int, optional): size of kernel. Defaults to 3.
         use_drop (bool, optional): using drop out layer. Defaults to False.
-        drop_ratio (float, optional): drop out ratio. Defaults to .5.
+        drop_ratio (float, optional): drop out ratio. Defaults to .2.
     """  
-    def __init__(self, kernel=3, use_drop=False, drop_ratio=.2):      
+    def __init__(self, kernel, use_drop=False, drop_ratio=.2):      
         super(BaseUnetModel, self).__init__()
-        self.stage1 = EntryUnit(1, 8)
-        self.stage2 = ResEncBlocks(8, 16)
-        self.stage3 = ResEncBlocks(16, 32)
-        self.stage4 = ResEncBlocks(32, 64)
+        self.stage1 = StemUnit(1, 8, kernel=kernel)
+        self.stage2 = ResEncBlocks(8, 16, kernel=kernel)
+        self.stage3 = ResEncBlocks(16, 32, kernel=kernel)
+        self.stage4 = ResEncBlocks(32, 64, kernel=kernel)
         if use_drop:
             self.stage5 = nn.Dropout3d(p=drop_ratio)
-        self.stage6 = ResDecBlocks(64, 32)
-        self.stage7 = ResDecBlocks(32, 16)
+        self.stage6 = ResDecBlocks(64, 32, kernel=kernel)
+        self.stage7 = ResDecBlocks(32, 16, kernel=kernel)
         if use_drop:
             self.stage8 = nn.Dropout3d(p=drop_ratio)
-        self.stage9 = ResDecBlocks(16, 8)
-        self.stage10 = FinalUnit(8,1)
+        self.stage9 = ResDecBlocks(16, 8, kernel=kernel)
+        self.stage10 = FinalUnit(8,1, kernel=kernel)
 
     def forward(self, x):
         residual1 = self.stage1(x)
@@ -42,19 +42,19 @@ class BaseUnetModel(nn.Module):
         out = residual1 + out.clone()
         return self.stage10(out)
 
-class EntryUnit(nn.Module):
+class StemUnit(nn.Module):
     def __init__(self, in_dim, hidden_dim, kernel=3):
-        """Implementation of entry unit - similar to StemUnit
+        """Implementation of entry unit
 
         Args:
             in_dim (int): size of input
             hidden_dim (int): size of hidden layer
             kernel (int, optional): _description_. Defaults to 3.
         """        
-        super(EntryUnit, self).__init__()
+        super(StemUnit, self).__init__()
         self.stage1 = nn.Sequential(
             nn.Conv3d(in_dim, hidden_dim, kernel_size=kernel, bias=False),
-            nn.ReLU()
+            nn.ReLU6()
         )        
 
     def forward(self, x):
@@ -72,7 +72,7 @@ class FinalUnit(nn.Module):
         super(FinalUnit, self).__init__()
         self.stage1 = nn.Sequential(
             nn.ConvTranspose3d(in_dim, hidden_dim, kernel_size=kernel, bias=False),
-            nn.ReLU6()
+            nn.Sigmoid()
         )        
 
     def forward(self, x):
@@ -126,7 +126,7 @@ class ResDecBlocks(nn.Module):
         self.block = nn.Sequential(
             nn.ConvTranspose3d(in_dim, hidden_dim, kernel_size=kernel, bias=False),
             nn.BatchNorm3d(hidden_dim),
-            nn.Sigmoid(),
+            nn.ReLU6(),
             nn.ConvTranspose3d(hidden_dim, hidden_dim, kernel_size=kernel, bias=False),
             nn.BatchNorm3d(hidden_dim),
             nn.Sigmoid()
