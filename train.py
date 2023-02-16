@@ -2,7 +2,6 @@ import torch, logging, argparse, os, time
 import pandas as pd
 
 from torch.optim import lr_scheduler
-from torch.autograd import Variable
 from torch.utils.data import random_split, DataLoader
 from torch.nn.parallel import DataParallel
 from torch.nn import CosineSimilarity
@@ -14,7 +13,7 @@ from omegaconf import OmegaConf
 def criterion(x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
     cos = CosineSimilarity(dim=1, eps=1e-6)
     pearson = cos(x1 - x1.mean(dim=1, keepdim=True), x2 - x2.mean(dim=1, keepdim=True))
-    return pearson
+    return 1. - pearson
 
 def main():
     parser = argparse.ArgumentParser(description='Training dense prediction model')
@@ -40,7 +39,7 @@ def main():
     
     logging.info("Loading configuration data ...")
     conf = OmegaConf.load(args.config)
-    save_flag = conf.EXPERIMENT.SAVE_MODEL == "True"
+    save_flag = bool(conf.EXPERIMENT.SAVE_MODEL)
     valid_networks = tuple(conf.DATASET.VALID_NETWORKS)
     checkpoints_directory = os.path.abspath(args.save_dir)
     mask_file_path = os.path.abspath(args.mask)
@@ -67,7 +66,7 @@ def main():
         base_model = base_model.cuda()
     optimizer = torch.optim.Adam(base_model.parameters(), lr=float(conf.TRAIN.BASE_LR))
     scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=float(conf.TRAIN.WEIGHT_DECAY))    
-    best_loss = float("-inf")
+    best_loss = 2.
     logging.info(f"Optimizer: Adam , Criterion: CosineSimilarity , lr: {conf.TRAIN.BASE_LR} , decay: {conf.TRAIN.WEIGHT_DECAY}")
     num_epochs = int(conf.TRAIN.EPOCHS)
     phase_error = {'train': float("-inf"), 'val': float("-inf")}    
@@ -97,14 +96,14 @@ def main():
             epoch_loss = running_loss / (len(data_pack[phase]) * inp.shape[-1])
             phase_error[phase] = epoch_loss
         logging.info("Epoch {}/{} - Train Loss: {:.10f} and Validation Loss: {:.10f}".format(epoch+1, num_epochs, phase_error['train'], phase_error['val']))
-        if phase == 'val' and epoch_loss >= best_loss and save_flag:
+        if phase == 'val' and epoch_loss < best_loss and save_flag:
             best_loss = epoch_loss
             torch.save({'epoch': epoch,
                         'state_dict': base_model.state_dict(),
                         'optimizer': optimizer.state_dict(),
                         'loss': phase_error,
                         'network': conf.EXPERIMENT.NETWORK_ID}, 
-                        os.path.join(checkpoints_directory, conf.EXPERIMENT.TAG, 'checkpoint_{}_{}.pth'.format(epoch, time.strftime("%m%d%y_%H%M%S"))))
+                        os.path.join(checkpoints_directory, 'checkpoint_{}_{}.pth'.format(epoch, time.strftime("%m%d%y_%H%M%S"))))
 
 
 if __name__ == "__main__":

@@ -5,18 +5,20 @@ images."""
 
 import numpy as np
 import operator
-from torch import nn
+import torch.nn as nn
+from typing import Tuple, Union
 from nilearn.masking import unmask, apply_mask
+from nibabel.nifti1 import Nifti1Image
 from nilearn import image
 from scipy import ndimage, stats
 from functools import reduce
 
 
-def weights_init(m: nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Linear) -> None:
+def weights_init(m: nn.Module) -> None:
     """Function to initialize model weights using kaiming method
 
     Args:
-        m (nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Linear): model layers
+        m (nn.Module): model layers
     """
     if isinstance(m, (nn.Conv3d, nn.ConvTranspose3d)):
         nn.init.kaiming_uniform_(m.weight.data,nonlinearity='relu')
@@ -29,11 +31,11 @@ def weights_init(m: nn.Conv3d or nn.ConvTranspose3d or nn.BatchNorm3d or nn.Line
         nn.init.kaiming_uniform_(m.weight.data)
         nn.init.constant_(m.bias.data, 0)     
    
-def tuple_prod(inp: tuple[int]):
+def tuple_prod(inp: Tuple[int]):
     """Function multiplies all elements of the input tuple.
        -- Equivalent to numpy.prod, but with lower running time in our case
     Args:
-        inp (tuple[int]): input tuple
+        inp (Tuple[int]): input tuple
 
     Returns:
         int: multiplication of all elements
@@ -68,11 +70,11 @@ def normalize_array(ar: np.ndarray, ax = -1) -> np.ndarray:
     return stats.zscore(ar, axis=ax)
 
 
-def fmri_masking(inp_img: str, mask_img: str, ax = 1, nor = False, sc = False) -> object:
+def fmri_masking(inp_img: Union[str, Nifti1Image], mask_img: str, ax = 1, nor = False, sc = False) -> object:
     """Function to z-score and scale input fMRI image using a mask 
 
     Args:
-        inp_img (str): path to a 4D Niimg-like object
+        inp_img (Union[str, Nifti1Image]): a 4D Niimg-like object or a path to it
         mask_img (str): path to a 3D Niimg-like object
         ax (int, optional): z-score by a specific axis; 0 for voxel-wise(fMRI), 1 for timepoint-wise(fMRI). Defaults to 1.
         nor (bool, optional): True if normalization is needed. Defaults to False.
@@ -83,9 +85,10 @@ def fmri_masking(inp_img: str, mask_img: str, ax = 1, nor = False, sc = False) -
 
     Returns:
         object: a 4D Niimg-like object
-    """
-    if not (inp_img.lower().endswith(('.nii', '.nii.gz')) and mask_img.lower().endswith(('.nii', '.nii.gz'))):
-        raise TypeError("Input image/mask is not a Nifti file, please check your input!")
+    """    
+    if (isinstance(inp_img, str) and not (inp_img.lower().endswith(('.nii', '.nii.gz')))):
+        if not isinstance(inp_img, Nifti1Image):
+            raise TypeError("Input image/mask is not a Nifti file, please check your input!") 
     data = apply_mask(inp_img, mask_img)
     if nor:
         data = normalize_array(data, ax=ax)
@@ -94,24 +97,24 @@ def fmri_masking(inp_img: str, mask_img: str, ax = 1, nor = False, sc = False) -
     return unmask(data, mask_img)
 
 
-def get_coordinates(inp_img: object, state=False) -> tuple:
-    """Function to find real/transformed coordinate of amplitude
+def get_coordinates(inp_img: Nifti1Image, state=False) -> Tuple:
+    """Function to find original/MNI coordinate of amplitude
 
     Args:
-        inp_img (object): a 3D Niimg-like object
+        inp_img (Nifti1Image): a 3D Niimg-like object
         state (bool, optional): True if image data contains negative values, otherwise False. Defaults to False.
 
     Raises:
         TypeError: if 'inp_img' is not a Niimg-like object
 
     Returns:
-        tuple: a tuple including real and transformed coordinates of amplitude
+        Tuple: a tuple including real and MNI coordinates of amplitude
     """
     if not hasattr(inp_img, 'get_fdata'):
-        raise TypeError("Input image is not a Nifti file, please check your input!")
+        raise TypeError("Input image is not a Nifti1Image file, please check your input!")
     data = inp_img.get_fdata()
     assert data.ndim == 3, 'Input image must be a 3D tensor (x, y, z)'
     if state:
         data = np.abs(data)
     key_points = ndimage.maximum_position(data)
-    return key_points, image.coord_transform(*key_points, inp_img.affine)
+    return key_points, image.coord_transform(*key_points, inp_img.affine) # type: ignore
