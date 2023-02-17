@@ -1,8 +1,47 @@
-"""Base DeepLab model with modifications to improve the performace for dense prediction. """
-
+"""Modified version of DeepLab model to improve the performace for dense prediction. """
 import torch
 from torch import nn
+from torch.nn.functional import interpolate
 
+class BaseDeepLabModel(nn.Module):
+    """Implementation of BPARC DeepLab model for dense prediction instead of segmentation.
+
+    Args:
+        in_dim (int): size of input layer
+        hidden_dim (int): size of hidden layer
+        kernel (int, optional): size of kernel. Defaults to 3.
+        use_drop (bool, optional): using drop out layer. Defaults to False.
+        drop_ratio (float, optional): drop out ratio. Defaults to .2.
+    """  
+    def __init__(self, kernel, use_drop=False, drop_ratio=.2) -> None:     
+        super(BaseUnetModel, self).__init__()
+        self.stage1 = StemUnit(1, 8, kernel=kernel)
+        self.stage2 = ResEncBlocks(8, 16, kernel=kernel)
+        self.stage3 = ResEncBlocks(16, 32, kernel=kernel)
+        self.stage4 = ResEncBlocks(32, 64, kernel=kernel)
+        if use_drop:
+            self.stage5 = nn.Dropout3d(p=drop_ratio)
+        self.stage6 = ResDecBlocks(64, 32, kernel=kernel)
+        self.stage7 = ResDecBlocks(32, 16, kernel=kernel)
+        if use_drop:
+            self.stage8 = nn.Dropout3d(p=drop_ratio)
+        self.stage9 = ResDecBlocks(16, 8, kernel=kernel)
+        self.stage10 = FinalUnit(8,1, kernel=kernel)
+
+    def forward(self, x):
+        residual1 = self.stage1(x)
+        residual2 = self.stage2(residual1)
+        residual3 = self.stage3(residual2)
+        out = self.stage4(residual3)
+        out = self.stage5(out)
+        out = self.stage6(out)
+        out = residual3 + out.clone()
+        out = self.stage7(out)
+        out = self.stage8(out)
+        out = residual2 + out.clone()
+        out = self.stage9(out)
+        out = residual1 + out.clone()
+        return self.stage10(out)
 
 class AtrousSpatialPyramidPooling(nn.Module):
     """Atrous Spatial Pyramid Pooling (ASPP) block
@@ -36,7 +75,7 @@ class AtrousSpatialPyramidPooling(nn.Module):
     def forward(self, x):
         _, _, H, W, D = x.shape
         h1 = self.global_pooling(x)
-        h1 = nn.functional.interpolate(h1, size=(H, W, D), mode="trilinear", align_corners=False)
+        h1 = interpolate(h1, size=(H, W, D), mode="trilinear", align_corners=False)
         h2 = self.stage1(x)
         h3 = self.stage2(x)
         h4 = self.stage3(x)
@@ -82,7 +121,7 @@ class FullyPreactivatedResidualUnit(nn.Module):
 
 
 class StemUnit(nn.Module):
-    def __init__(self, in_dim, hidden_dim, downsample=1):
+    def __init__(self, in_dim, hidden_dim, downsample=1) -> None:
         """Implementation of entry unit based on https://arxiv.org/abs/1812.01187
 
         Args:
@@ -101,3 +140,10 @@ class StemUnit(nn.Module):
     def forward(self, x):
         return self.stage1(x)
 
+class FullyPreactiveBaseUnit(nn.Module):
+    def __init__(self, in_dim, out_dim, downsample=1) -> None:
+        super(FullyPreactiveBaseUnit, self).__init__()
+        self.stage1 = nn.Sequential(
+            nn.Conv3d(in_ch, out_ch, kernel_size=3, padding=3, dilation=3, bias=False),
+            nn.BatchNorm3d(out_ch)   
+        ) 

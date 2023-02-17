@@ -1,4 +1,4 @@
-"""Base UNet style model with encoding and decoding blocks with modifications."""
+"""Modified version of UNet model for brain parcellation with encoding and decoding blocks."""
 
 from torch import nn 
 

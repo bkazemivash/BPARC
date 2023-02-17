@@ -70,8 +70,8 @@ def normalize_array(ar: np.ndarray, ax = -1) -> np.ndarray:
     return stats.zscore(ar, axis=ax)
 
 
-def fmri_masking(inp_img: Union[str, Nifti1Image], mask_img: str, ax = 1, nor = False, sc = False) -> object:
-    """Function to z-score and scale input fMRI image using a mask 
+def fmri_masking(inp_img: Union[str, Nifti1Image], mask_img: str, ax = 1, nor = False, sc = False) -> Nifti1Image:
+    """Function to z-score and scale input fMRI image using a mask    
 
     Args:
         inp_img (Union[str, Nifti1Image]): a 4D Niimg-like object or a path to it
@@ -86,15 +86,15 @@ def fmri_masking(inp_img: Union[str, Nifti1Image], mask_img: str, ax = 1, nor = 
     Returns:
         object: a 4D Niimg-like object
     """    
-    if (isinstance(inp_img, str) and not (inp_img.lower().endswith(('.nii', '.nii.gz')))):
-        if not isinstance(inp_img, Nifti1Image):
-            raise TypeError("Input image/mask is not a Nifti file, please check your input!") 
+    if ((not isinstance(inp_img, Nifti1Image)) and (isinstance(inp_img, str) and not (inp_img.lower().endswith(('.nii', '.nii.gz'))))):
+        raise TypeError("Input image or mask is not a Nifti file, please check your input!") 
+
     data = apply_mask(inp_img, mask_img)
     if nor:
         data = normalize_array(data, ax=ax)
     if sc:
         data = scale_array(data, ax=-1)
-    return unmask(data, mask_img)
+    return unmask(data, mask_img) # type: ignore    
 
 
 def get_coordinates(inp_img: Nifti1Image, state=False) -> Tuple:

@@ -2,7 +2,8 @@ import torch, logging, argparse, os, time
 import pandas as pd
 
 from torch.optim import lr_scheduler
-from torch.utils.data import random_split, DataLoader
+from torch.utils.data import DataLoader
+from torch.utils.data.dataset import random_split
 from torch.nn.parallel import DataParallel
 from torch.nn import CosineSimilarity
 from lib.data_io import BrainFMRIDataset
@@ -61,7 +62,7 @@ def main():
     base_model.apply(weights_init)
     if torch.cuda.device_count() > 1:
         base_model = DataParallel(base_model, device_ids = gpu_ids)
-        logging.info("Pytorch Distributed Data Parallel activated using gpus: {gpu_ids}")
+        logging.info(f"Pytorch Distributed Data Parallel activated using gpus: {gpu_ids}")
     if torch.cuda.is_available():
         base_model = base_model.cuda()
     optimizer = torch.optim.Adam(base_model.parameters(), lr=float(conf.TRAIN.BASE_LR))

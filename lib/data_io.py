@@ -3,7 +3,7 @@
 import torch
 import scipy.io as iom
 from typing import Tuple 
-from torch.utils.data import Dataset
+from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 from tools.utils import fmri_masking, tuple_prod
 
@@ -50,7 +50,7 @@ class BrainFMRIDataset(Dataset):
         file_content = iom.loadmat(self.ica_maps[subject_ind])
         data_cube = torch.einsum('nmk,mjk->njk', torch.Tensor(file_content['ic'])[param.long(),:].T.unsqueeze(1), 
                             torch.Tensor(file_content['tc']) [:,param.long()].unsqueeze(0))
-        uniform_cdf = torch.div(torch.abs(data_cube[:,:,self.ica_map_id]), torch.abs(data_cube).sum(axis=-1)).float()
+        uniform_cdf = torch.div(torch.abs(data_cube[:,:,self.ica_map_id]), torch.abs(data_cube).sum(dim=-1)).float()
         file_content = iom.loadmat(self.ica_informaion[subject_ind])        
         vol_indices = torch.Tensor(file_content['sesInfo'][0,0]['mask_ind']).ravel() - 1
         map4d = torch.zeros(tuple_prod(self.image_size[:3]), self.image_size[-1], dtype=torch.float32)
