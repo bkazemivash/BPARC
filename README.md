@@ -1,5 +1,7 @@
 # BPARC
 Supervised brain parcellation framework for encoding spatiotemporal brain dynamism using fMRI data. 
+
+
 Note: This repo will be update very soon.
 
 ## References
